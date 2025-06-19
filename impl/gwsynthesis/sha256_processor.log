@@ -1,0 +1,48 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v'
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v'
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\test_uart_beacon.v'
+WARN  (EX3801) : Parameter 'PREFIX_LEN' becomes localparam in 'test_uart_beacon' with formal parameter declaration list("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\test_uart_beacon.v":16)
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\top_uart_sha256.v'
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\top_wrapper_tang9k.v'
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\uart_rx.v'
+Analyzing Verilog file 'C:\Users\dvirdc\Documents\fpga\sha256_processor\src\uart_tx.v'
+Compiling module 'top_wrapper_tang9k'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\top_wrapper_tang9k.v":31)
+Compiling module 'top_uart_sha256'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\top_uart_sha256.v":15)
+Compiling module 'uart_rx(CLK_FRE=27)'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\uart_rx.v":1)
+Compiling module 'uart_tx(CLK_FRE=27)'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\uart_tx.v":1)
+Compiling module 'sha256_processor'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v":7)
+Compiling module 'sha256_core'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v":3)
+Extracting RAM for identifier 'K_ROM'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v":18)
+Extracting RAM for identifier 'w'("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v":46)
+WARN  (EX3791) : Expression size 8 truncated to fit in target size 7("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v":96)
+WARN  (EX3791) : Expression size 8 truncated to fit in target size 7("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v":99)
+WARN  (EX3791) : Expression size 8 truncated to fit in target size 7("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_core.v":120)
+WARN  (EX3791) : Expression size 7 truncated to fit in target size 6("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v":102)
+WARN  (EX3791) : Expression size 7 truncated to fit in target size 6("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v":107)
+WARN  (EX3791) : Expression size 7 truncated to fit in target size 6("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v":111)
+WARN  (EX3791) : Expression size 7 truncated to fit in target size 6("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v":128)
+WARN  (EX3791) : Expression size 7 truncated to fit in target size 6("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.v":137)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\top_uart_sha256.v":116)
+WARN  (EX3791) : Expression size 8 truncated to fit in target size 7("C:\Users\dvirdc\Documents\fpga\sha256_processor\src\top_uart_sha256.v":136)
+NOTE  (EX0101) : Current top module is "top_wrapper_tang9k"
+[5%] Running netlist conversion ...
+Running device independent optimization ...
+[10%] Optimizing Phase 0 completed
+[15%] Optimizing Phase 1 completed
+[25%] Optimizing Phase 2 completed
+Running inference ...
+[30%] Inferring Phase 0 completed
+[40%] Inferring Phase 1 completed
+[50%] Inferring Phase 2 completed
+[55%] Inferring Phase 3 completed
+Running technical mapping ...
+[60%] Tech-Mapping Phase 0 completed
+[65%] Tech-Mapping Phase 1 completed
+[75%] Tech-Mapping Phase 2 completed
+[80%] Tech-Mapping Phase 3 completed
+[90%] Tech-Mapping Phase 4 completed
+[95%] Generate netlist file "C:\Users\dvirdc\Documents\fpga\sha256_processor\impl\gwsynthesis\sha256_processor.vg" completed
+[100%] Generate report file "C:\Users\dvirdc\Documents\fpga\sha256_processor\impl\gwsynthesis\sha256_processor_syn.rpt.html" completed
+GowinSynthesis finish

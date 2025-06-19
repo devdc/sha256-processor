@@ -1,0 +1,82 @@
+[
+ {
+  "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/test_uart_beacon.v",
+  "InstLine" : 2,
+  "InstName" : "test_uart_beacon",
+  "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/test_uart_beacon.v",
+  "ModuleLine" : 2,
+  "ModuleName" : "test_uart_beacon",
+  "SubInsts" : [
+   {
+    "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/test_uart_beacon.v",
+    "InstLine" : 141,
+    "InstName" : "u_rx",
+    "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_rx.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "uart_rx"
+   },
+   {
+    "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/test_uart_beacon.v",
+    "InstLine" : 153,
+    "InstName" : "u_tx",
+    "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_tx.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "uart_tx"
+   }
+  ]
+ },
+ {
+  "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_wrapper_tang9k.v",
+  "InstLine" : 31,
+  "InstName" : "top_wrapper_tang9k",
+  "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_wrapper_tang9k.v",
+  "ModuleLine" : 31,
+  "ModuleName" : "top_wrapper_tang9k",
+  "SubInsts" : [
+   {
+    "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_wrapper_tang9k.v",
+    "InstLine" : 41,
+    "InstName" : "top",
+    "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_uart_sha256.v",
+    "ModuleLine" : 15,
+    "ModuleName" : "top_uart_sha256",
+    "SubInsts" : [
+     {
+      "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_uart_sha256.v",
+      "InstLine" : 36,
+      "InstName" : "uart_rx_inst",
+      "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_rx.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "uart_rx"
+     },
+     {
+      "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_uart_sha256.v",
+      "InstLine" : 53,
+      "InstName" : "uart_tx_inst",
+      "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_tx.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "uart_tx"
+     },
+     {
+      "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_uart_sha256.v",
+      "InstLine" : 70,
+      "InstName" : "processor",
+      "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_processor.v",
+      "ModuleLine" : 7,
+      "ModuleName" : "sha256_processor",
+      "SubInsts" : [
+       {
+        "InstFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_processor.v",
+        "InstLine" : 41,
+        "InstName" : "sha_core",
+        "ModuleFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_core.v",
+        "ModuleLine" : 3,
+        "ModuleName" : "sha256_core"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]

@@ -1,0 +1,82 @@
+`begin_keywords "1800-2023"
+`line 1 "src/top_wrapper_tang9k.v" 1
+
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+
+`line 22 "src/top_wrapper_tang9k.v" 0
+ 
+
+
+
+
+
+
+`line 29 "src/top_wrapper_tang9k.v" 0
+`timescale 1ns/1ps
+
+`line 31 "src/top_wrapper_tang9k.v" 0
+module top_wrapper_tang9k (
+    input clk,            
+    input rst_n,            
+    input uart_rx,        
+    output uart_tx,       
+    output led0           
+);
+
+`line 39 "src/top_wrapper_tang9k.v" 0
+    wire internal_rst = ~rst_n;
+
+`line 41 "src/top_wrapper_tang9k.v" 0
+    top_uart_sha256 top (
+        .clk(clk),
+        .rst(internal_rst),
+        .uart_rx(uart_rx),
+        .uart_tx(uart_tx)
+    );
+
+`line 48 "src/top_wrapper_tang9k.v" 0
+     
+     
+    assign led0 = uart_tx;  
+
+`line 52 "src/top_wrapper_tang9k.v" 0
+endmodule
+
+`line 54 "src/top_wrapper_tang9k.v" 0

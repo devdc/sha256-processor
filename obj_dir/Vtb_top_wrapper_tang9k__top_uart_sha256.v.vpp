@@ -1,0 +1,213 @@
+`begin_keywords "1800-2023"
+`line 1 "src/top_uart_sha256.v" 1
+`timescale 1ns/1ps
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+
+`line 13 "src/top_uart_sha256.v" 0
+ 
+
+`line 15 "src/top_uart_sha256.v" 0
+module top_uart_sha256 #(
+    parameter CLK_FREQ = 27_000_000,    
+    parameter BAUD     = 115200
+)(
+    input        clk,
+    input        rst,        
+    input        uart_rx,    
+    output       uart_tx     
+);
+
+`line 25 "src/top_uart_sha256.v" 0
+     
+     
+    localparam integer CLK_FREQ_MHZ = CLK_FREQ / 1_000_000;
+
+`line 29 "src/top_uart_sha256.v" 0
+     
+    wire [7:0] rx_data;
+    wire       rx_valid;
+
+`line 33 "src/top_uart_sha256.v" 0
+    uart_rx #(
+        .CLK_FRE   (CLK_FREQ_MHZ),
+        .BAUD_RATE (BAUD)
+    ) uart_rx_inst (
+        .clk            (clk),
+        .rst_n          (~rst),       
+        .rx_data        (rx_data),
+        .rx_data_valid  (rx_valid),
+        .rx_data_ready  (1'b1),       
+        .rx_pin         (uart_rx)
+    );
+
+`line 45 "src/top_uart_sha256.v" 0
+     
+    reg        tx_data_valid = 1'b0;    
+    reg [7:0]  tx_data       = 8'd0;
+    wire       tx_ready;                
+
+`line 50 "src/top_uart_sha256.v" 0
+    uart_tx #(
+        .CLK_FRE   (CLK_FREQ_MHZ),
+        .BAUD_RATE (BAUD)
+    ) uart_tx_inst (
+        .clk            (clk),
+        .rst_n          (~rst),
+        .tx_data        (tx_data),
+        .tx_data_valid  (tx_data_valid),
+        .tx_data_ready  (tx_ready),
+        .tx_pin         (uart_tx)
+    );
+
+`line 62 "src/top_uart_sha256.v" 0
+     
+    reg         start_hash = 1'b0;
+    reg         data_valid = 1'b0;
+    reg         data_last  = 1'b0;
+    reg  [7:0]  data_in    = 8'd0;
+    wire [255:0] hash_out;
+    wire         hash_done;
+
+`line 70 "src/top_uart_sha256.v" 0
+    sha256_processor processor (
+        .clk        (clk),
+        .rst        (rst),
+        .start      (start_hash),
+        .data_in    (data_in),
+        .data_valid (data_valid),
+        .data_last  (data_last),
+        .hash_out   (hash_out),
+        .done       (hash_done)
+    );
+
+`line 81 "src/top_uart_sha256.v" 0
+     
+    reg [2:0] state;
+    localparam IDLE = 0, RECEIVE = 1, WAIT_DONE = 2, SEND = 3, DONE = 4;
+
+`line 85 "src/top_uart_sha256.v" 0
+    reg [7:0] byte_counter;
+    reg [6:0] send_index;    
+
+`line 88 "src/top_uart_sha256.v" 0
+    reg        have_hold;      
+    reg [7:0]  hold_byte; 
+
+`line 91 "src/top_uart_sha256.v" 0
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            
+            have_hold <= 1'b0;
+            hold_byte <= 8'd0;
+
+`line 97 "src/top_uart_sha256.v" 0
+            state        <= IDLE;
+            data_valid   <= 0;
+            data_last    <= 0;
+            start_hash   <= 0;
+            tx_data_valid<= 0;
+            byte_counter <= 0;
+            send_index   <= 0;
+        end else begin
+             
+            data_valid    <= 0;
+            data_last     <= 0;
+            start_hash    <= 0;
+            tx_data_valid <= 0;
+
+`line 111 "src/top_uart_sha256.v" 0
+            case (state)
+                IDLE: begin
+                    if (rx_valid && rx_data == 8'h01) begin
+                        start_hash <= 1;
+                        byte_counter <= 0;
+                        state        <= RECEIVE;
+                    end
+                end
+
+`line 120 "src/top_uart_sha256.v" 0
+                RECEIVE: begin
+                    if (rx_valid) begin
+                        if (rx_data == 8'hFF) begin           
+                             
+                            if (have_hold) begin
+                                data_in     <= hold_byte;
+                                data_valid  <= 1'b1;
+                                data_last   <= 1'b1;          
+                                byte_counter<= byte_counter + 1;
+                            end
+                            have_hold <= 1'b0;                
+                            state     <= WAIT_DONE;
+
+`line 133 "src/top_uart_sha256.v" 0
+                        end else begin                        
+                             
+                            if (have_hold) begin
+                                data_in     <= hold_byte;
+                                data_valid  <= 1'b1;
+                                byte_counter<= byte_counter + 1;
+                            end
+                             
+                            hold_byte <= rx_data;
+                            have_hold <= 1'b1;
+                        end
+                    end
+                end
+
+`line 147 "src/top_uart_sha256.v" 0
+                WAIT_DONE: begin
+                    if (hash_done) begin
+                        send_index <= 0;
+                        state      <= SEND;
+                    end
+                end
+
+`line 154 "src/top_uart_sha256.v" 0
+                SEND: begin
+                    if (tx_ready) begin           
+                        tx_data       <= to_ascii(hash_out[255 - send_index*4 -: 4]);
+                        tx_data_valid <= 1;       
+                        send_index    <= send_index + 1;
+                        if (send_index == 7'd63)
+                            state <= DONE;
+                    end
+                end
+
+`line 164 "src/top_uart_sha256.v" 0
+                DONE: begin
+                    if (tx_ready)
+                        state <= IDLE;
+                end
+            endcase
+        end
+    end
+
+`line 172 "src/top_uart_sha256.v" 0
+     
+    function [7:0] to_ascii (input [3:0] nib);
+        to_ascii = (nib < 10) ? ("0" + nib) : ("a" + nib - 10);
+    endfunction
+
+`line 177 "src/top_uart_sha256.v" 0
+endmodule
+
+`line 179 "src/top_uart_sha256.v" 0

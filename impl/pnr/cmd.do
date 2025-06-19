@@ -1,0 +1,22 @@
+-d C:\Users\dvirdc\Documents\fpga\sha256_processor\impl\gwsynthesis\sha256_processor.vg
+-p GW1NR-9C-QFN88P-6
+-pn GW1NR-LV9QN88PC6/I5
+-cst C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_constraints.cst
+-cfg C:\Users\dvirdc\Documents\fpga\sha256_processor\impl\pnr\device.cfg
+-sdc C:\Users\dvirdc\Documents\fpga\sha256_processor\src\sha256_processor.sdc
+-bit
+-tr
+-ph
+-sdf
+-ibs
+-posp
+-o
+-warning_all
+-tt
+-timing
+-cst_error
+-no_cst_warning
+-place_option 1
+-correct_hold 1
+-route_maxfan 23
+-global_freq 50.000

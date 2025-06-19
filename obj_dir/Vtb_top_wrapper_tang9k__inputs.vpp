@@ -1,0 +1,902 @@
+// Dump of all post-preprocessor input
+// Blank lines and `line directives have been removed
+//
+// Information:
+//   Verilator 5.028 2024-08-21 rev UNKNOWN.REV
+//   Arguments: --cc --exe --build -Wno-fatal --timing --assert --debug --top-module tb_top_wrapper_tang9k --trace-fst --trace-depth 10 --trace-max-width 64 --trace-max-array 32 src/sha256_core.v src/sha256_processor.v src/tb_top_wrapper_tang9k.v src/test_uart_beacon.v src/top_uart_sha256.v src/top_wrapper_tang9k.v src/uart_rx.v src/uart_tx.v sim_main.cpp
+//   Build jobs: 1
+//   Verilate jobs: 1
+
+`begin_keywords "1800-2023"
+`timescale 1ns/1ps
+module sha256_core (
+    input         clk,
+    input         rst,
+    input         start,
+    input  [511:0] block_in,
+    input  [255:0] hash_init,     
+    input         use_init,       
+    output reg [255:0] hash_out,
+    output reg    ready
+);
+    (* rom_style = "block" *)
+    reg [31:0] K_ROM [0:63];
+    initial begin
+        K_ROM[ 0]=32'h428a2f98; K_ROM[ 1]=32'h71374491; K_ROM[ 2]=32'hb5c0fbcf; K_ROM[ 3]=32'he9b5dba5;
+        K_ROM[ 4]=32'h3956c25b; K_ROM[ 5]=32'h59f111f1; K_ROM[ 6]=32'h923f82a4; K_ROM[ 7]=32'hab1c5ed5;
+        K_ROM[ 8]=32'hd807aa98; K_ROM[ 9]=32'h12835b01; K_ROM[10]=32'h243185be; K_ROM[11]=32'h550c7dc3;
+        K_ROM[12]=32'h72be5d74; K_ROM[13]=32'h80deb1fe; K_ROM[14]=32'h9bdc06a7; K_ROM[15]=32'hc19bf174;
+        K_ROM[16]=32'he49b69c1; K_ROM[17]=32'hefbe4786; K_ROM[18]=32'h0fc19dc6; K_ROM[19]=32'h240ca1cc;
+        K_ROM[20]=32'h2de92c6f; K_ROM[21]=32'h4a7484aa; K_ROM[22]=32'h5cb0a9dc; K_ROM[23]=32'h76f988da;
+        K_ROM[24]=32'h983e5152; K_ROM[25]=32'ha831c66d; K_ROM[26]=32'hb00327c8; K_ROM[27]=32'hbf597fc7;
+        K_ROM[28]=32'hc6e00bf3; K_ROM[29]=32'hd5a79147; K_ROM[30]=32'h06ca6351; K_ROM[31]=32'h14292967;
+        K_ROM[32]=32'h27b70a85; K_ROM[33]=32'h2e1b2138; K_ROM[34]=32'h4d2c6dfc; K_ROM[35]=32'h53380d13;
+        K_ROM[36]=32'h650a7354; K_ROM[37]=32'h766a0abb; K_ROM[38]=32'h81c2c92e; K_ROM[39]=32'h92722c85;
+        K_ROM[40]=32'ha2bfe8a1; K_ROM[41]=32'ha81a664b; K_ROM[42]=32'hc24b8b70; K_ROM[43]=32'hc76c51a3;
+        K_ROM[44]=32'hd192e819; K_ROM[45]=32'hd6990624; K_ROM[46]=32'hf40e3585; K_ROM[47]=32'h106aa070;
+        K_ROM[48]=32'h19a4c116; K_ROM[49]=32'h1e376c08; K_ROM[50]=32'h2748774c; K_ROM[51]=32'h34b0bcb5;
+        K_ROM[52]=32'h391c0cb3; K_ROM[53]=32'h4ed8aa4a; K_ROM[54]=32'h5b9cca4f; K_ROM[55]=32'h682e6ff3;
+        K_ROM[56]=32'h748f82ee; K_ROM[57]=32'h78a5636f; K_ROM[58]=32'h84c87814; K_ROM[59]=32'h8cc70208;
+        K_ROM[60]=32'h90befffa; K_ROM[61]=32'ha4506ceb; K_ROM[62]=32'hbef9a3f7; K_ROM[63]=32'hc67178f2;
+    end
+    localparam H0_INIT = 32'h6a09e667, H1_INIT = 32'hbb67ae85, H2_INIT = 32'h3c6ef372, H3_INIT = 32'ha54ff53a,
+               H4_INIT = 32'h510e527f, H5_INIT = 32'h9b05688c, H6_INIT = 32'h1f83d9ab, H7_INIT = 32'h5be0cd19;
+    reg [31:0] a, b, c, d, e, f, g, h;
+    reg [31:0] h0, h1, h2, h3, h4, h5, h6, h7;
+    reg [31:0] w[0:63];  
+    reg [6:0] t;         
+    reg [1:0] state;
+    localparam IDLE = 2'd0, PREP = 2'd1, COMP = 2'd2, DONE = 2'd3;
+    wire [31:0] S1 = (ror(e,6) ^ ror(e,11) ^ ror(e,25));
+    wire [31:0] ch = (e & f) ^ ((~e) & g);
+    wire [31:0] T1 = h + S1 + ch + K_ROM[t] + w[t];
+    wire [31:0] S0 = (ror(a,2) ^ ror(a,13) ^ ror(a,22));
+    wire [31:0] maj = (a & b) ^ (a & c) ^ (b & c);
+    wire [31:0] T2 = S0 + maj;
+    function [31:0] ror; input[31:0] x; input integer n; begin ror = (x >> n) | (x << (32 - n)); end endfunction
+    function [31:0] sig0; input[31:0] x; begin sig0 = ror(x, 7) ^ ror(x, 18) ^ (x >> 3); end endfunction
+    function [31:0] sig1; input[31:0] x; begin sig1 = ror(x, 17) ^ ror(x, 19) ^ (x >> 10); end endfunction
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            state <= IDLE;
+            ready <= 1'b0;
+            hash_out <= 256'b0;
+            t <= 7'b0;
+        end else begin
+            case (state)
+                IDLE: begin
+                    if (start) begin
+                        ready <= 1'b0;
+                        if (use_init) begin
+                            {h0,h1,h2,h3,h4,h5,h6,h7} <= hash_init;
+                        end else begin
+                            {h0,h1,h2,h3,h4,h5,h6,h7} <= {H0_INIT,H1_INIT,H2_INIT,H3_INIT,H4_INIT,H5_INIT,H6_INIT,H7_INIT};
+                        end
+                        t <= 7'b0;
+                        state <= PREP;
+                    end
+                end
+                PREP: begin
+                    if (t < 16) begin
+                        w[t] <= block_in[511 - 32*t -: 32];
+                        t <= t + 1;
+                    end else if (t < 64) begin
+                        w[t] <= sig1(w[t-2]) + w[t-7] + sig0(w[t-15]) + w[t-16];
+                        t <= t + 1;
+                    end else begin
+                        a <= h0; b <= h1; c <= h2; d <= h3;
+                        e <= h4; f <= h5; g <= h6; h <= h7;
+                        t <= 7'b0;  
+                        state <= COMP;
+                    end
+                end
+                COMP: begin
+                    if (t < 64) begin
+                        a <= T1 + T2;
+                        b <= a;
+                        c <= b;
+                        d <= c;
+                        e <= d + T1;
+                        f <= e;
+                        g <= f;
+                        h <= g;
+                        t <= t + 1;
+                    end else begin
+                        h0 <= h0 + a;
+                        h1 <= h1 + b;
+                        h2 <= h2 + c;
+                        h3 <= h3 + d;
+                        h4 <= h4 + e;
+                        h5 <= h5 + f;
+                        h6 <= h6 + g;
+                        h7 <= h7 + h;
+                        state <= DONE;
+                    end
+                end
+                DONE: begin
+                    hash_out <= {h0, h1, h2, h3, h4, h5, h6, h7};
+                    ready <= 1'b1;
+                    if (!start) begin
+                        state <= IDLE;
+                    end
+                end
+            endcase
+        end
+    end
+endmodule
+
+`begin_keywords "1800-2023"
+`timescale 1ns/1ps
+/*verilator lint_off WIDTHEXPAND*/ 
+/*verilator lint_off WIDTH*/ 
+/*verilator lint_off CASEINCOMPLETE*/ 
+/*verilator lint_off UNUSEDPARAM*/ 
+module sha256_processor (
+    input         clk,
+    input         rst,
+    input         start,
+    input  [7:0]  data_in,
+    input         data_valid,
+    input         data_last,
+    output [255:0] hash_out,
+    output        done
+);
+    localparam BLOCK_SIZE = 64;
+    reg [511:0] block_buffer;
+    reg [5:0]   byte_index;
+    reg         block_ready;
+    reg [2:0] state;
+    localparam IDLE=0, LOAD=1, PAD=2, HASH=3, DONE=4;
+    wire [255:0] core_hash_out;
+    wire         core_ready;
+    reg          core_start;
+    reg  [511:0] core_block;
+    reg  [255:0] core_hash_init;
+    reg          core_use_init;
+    reg          core_busy;
+    reg          core_ready_prev;
+    sha256_core sha_core (
+        .clk(clk),
+        .rst(rst),
+        .start(core_start),
+        .block_in(core_block),
+        .hash_init(core_hash_init),
+        .use_init(core_use_init),
+        .hash_out(core_hash_out),
+        .ready(core_ready)
+    );
+    reg [255:0] hash_state;
+    assign hash_out = hash_state;
+    assign done = (state == DONE);
+    reg [63:0] total_bits;
+    reg        seen_last;
+    reg        need_length_block;
+    reg [5:0]  pad_index;
+    integer i;
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            state <= IDLE;
+            byte_index <= 0;
+            block_ready <= 0;
+            core_start <= 0;
+            core_block <= 0;
+            core_hash_init <= 0;
+            core_use_init <= 0;
+            core_busy <= 0;
+            core_ready_prev <= 0;
+            hash_state <= 256'h6a09e667bb67ae853c6ef372a54ff53a510e527f9b05688c1f83d9ab5be0cd19;
+            total_bits <= 0;
+            seen_last <= 0;
+            need_length_block <= 0;
+            pad_index <= 0;
+        end else begin
+            case (state)
+                IDLE: begin
+                    if (start) begin
+                        hash_state <= 256'h6a09e667bb67ae853c6ef372a54ff53a510e527f9b05688c1f83d9ab5be0cd19;
+                        state <= LOAD;
+                        byte_index <= 0;
+                        total_bits <= 0;
+                        seen_last <= 0;
+                        need_length_block <= 0;
+                        pad_index <= 0;
+                    end
+                end
+                LOAD: begin
+                    if (data_valid && byte_index < BLOCK_SIZE) begin
+                        block_buffer[511 - byte_index*8 -: 8] <= data_in;
+                        total_bits <= total_bits + 8;
+                        if (data_last) begin
+                            seen_last <= 1;
+                            if (byte_index + 1 == BLOCK_SIZE) begin
+                                byte_index <= byte_index + 1;
+                                block_ready <= 1;
+                                state <= HASH;
+                                need_length_block <= 1;
+                            end else begin
+                                byte_index <= byte_index + 1;  
+                                state <= PAD;
+                            end
+                        end else begin
+                            byte_index <= byte_index + 1;
+                            if (byte_index + 1 == BLOCK_SIZE) begin
+                                block_ready <= 1;
+                                state <= HASH;
+                            end
+                        end
+                    end else if (seen_last) begin
+                        state <= PAD;
+                    end
+                end
+                PAD: begin
+                    if (pad_index == 0) begin
+                        block_buffer[511 - (byte_index * 8) -: 8] <= 8'h80;
+                        pad_index <= byte_index + 1;
+                        if (byte_index < 56) begin
+                            need_length_block <= 0;
+                        end else begin
+                            need_length_block <= 1;
+                        end
+                    end else if ((pad_index < 56) || (need_length_block && pad_index < 64)) begin
+                        block_buffer[511 - (pad_index * 8) -: 8] <= 8'h00;
+                        pad_index <= pad_index + 1;
+                    end else begin
+                        if (!need_length_block) begin
+                            for (i = 0; i < 8; i = i + 1)
+                                block_buffer[63 - i*8 -: 8] <= total_bits[63 - i*8 -: 8];
+                        end
+                        block_ready <= 1;
+                        state <= HASH;
+                        pad_index <= 0;
+                    end
+                end
+                HASH: begin
+                    if (block_ready && !core_busy) begin
+                        core_block <= block_buffer;
+                        core_hash_init <= hash_state;
+                        core_use_init <= 1;
+                        core_start <= 1;
+                        block_ready <= 0;
+                        core_busy <= 1;    
+                    end else begin
+                        core_start <= 0;
+                    end
+                    if (core_ready && !core_ready_prev) begin
+                        core_busy <= 0;            
+                        hash_state <= core_hash_out;   
+                        if (seen_last && need_length_block) begin
+                            block_buffer <= 512'b0;
+                            block_buffer[511:504] <= 8'h80;
+                            for (i = 0; i < 8; i = i + 1)
+                                block_buffer[63 - i*8 -: 8] <= total_bits[63 - i*8 -: 8];
+                            block_ready <= 1;
+                            need_length_block <= 0;
+                        end else if (seen_last && !need_length_block) begin
+                            state <= DONE;
+                        end else begin
+                            byte_index <= 0;
+                            state <= LOAD;
+                        end
+                    end
+                    core_ready_prev <= core_ready;
+                end
+                DONE: begin
+                    core_start <= 0;
+                end
+            endcase
+        end
+    end
+endmodule
+
+`begin_keywords "1800-2023"
+`timescale 1ns/1ps
+module tb_top_wrapper_tang9k;
+    localparam real CLK_FREQ   = 27_000_000.0;    
+    localparam real BAUD_RATE  =   115_200.0;     
+    localparam real CLK_PERIOD = 1e9 / CLK_FREQ;  
+    localparam real BIT_PERIOD = 1e9 / BAUD_RATE; 
+    reg  clk      = 1'b0;
+    reg  rst_n    = 1'b0;         
+    reg  uart_rx  = 1'b1;         
+    wire uart_tx;
+    wire led0;
+    top_wrapper_tang9k dut (
+        .clk    (clk),
+        .rst_n  (rst_n),
+        .uart_rx(uart_rx),
+        .uart_tx(uart_tx),
+        .led0   (led0)
+    );
+    always #(CLK_PERIOD/2.0) clk = ~clk;
+    initial begin
+        rst_n = 1'b0;
+        repeat (10) @(posedge clk);
+        rst_n = 1'b1;
+    end
+    task automatic uart_send_byte (input [7:0] data);
+        integer i;
+        begin
+            uart_rx = 1'b0; #(BIT_PERIOD);
+            for (i = 0; i < 8; i = i + 1) begin
+                uart_rx = data[i];
+                #(BIT_PERIOD);
+            end
+            uart_rx = 1'b1;
+            #(BIT_PERIOD);
+            #(BIT_PERIOD);
+        end
+    endtask
+    integer j;
+    integer fd;
+    initial fd = $fopen("uart_tx_log.txt", "w");
+    reg [7:0] rx_byte;
+    initial begin : RX_MONITOR
+        forever begin
+            @(negedge uart_tx);
+            #(BIT_PERIOD/2);   
+            for (j = 0; j < 8; j = j + 1) begin
+                #(BIT_PERIOD);
+                rx_byte[j] = uart_tx;
+            end
+            #(BIT_PERIOD);     
+            $fwrite(fd, "%02x ", rx_byte);
+            $display($time, " ns : RX 0x%02x", rx_byte);
+        end
+    end
+    initial begin
+        @(posedge rst_n);
+        @(posedge clk);
+        uart_send_byte(8'h01);  
+        uart_send_byte(8'h54);  
+        uart_send_byte(8'h45);  
+        uart_send_byte(8'h53);  
+        uart_send_byte(8'h54);  
+        uart_send_byte(8'hFF);  
+        #(BIT_PERIOD * 300);
+        $display("Simulation complete.");
+        $finish;
+    end
+    initial begin
+        #100_000_000;
+        $display("Timeout – ending simulation.");
+        $finish;
+    end
+endmodule
+
+`begin_keywords "1800-2023"
+`timescale 1ns/1ps
+module test_uart_beacon #(
+    parameter CLK_FRE      = 27,         
+    parameter UART_FRE     = 115200,     
+    parameter MAX_PAYLOAD  = 32          
+)(
+    input  wire clk,
+    input  wire rst_n,
+    input  wire uart_rx,
+    output wire uart_tx
+);
+parameter          PREFIX_LEN = 20;            
+localparam [8*PREFIX_LEN-1:0] PREFIX =
+        "Hello Tang Nano 9K: ";
+localparam [15:0]  CRLF = 16'h0d0a;            
+reg  [7:0]  rx_buf [0:MAX_PAYLOAD-1];
+reg  [5:0]  rx_cnt;            
+wire [7:0]  rx_data;
+wire        rx_data_vld;
+wire        rx_data_ready = 1'b1;
+reg tx_done;
+always @(posedge clk or negedge rst_n)
+    if (!rst_n)
+        tx_done <= 1'b0;
+    else
+        tx_done <= (state==ST_SEND_E) && (tx_data_vld && tx_data_rdy && ptr==1);
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+        rx_cnt <= 0;
+    else if (tx_done)                        
+        rx_cnt <= 0;
+    else if (rx_data_vld &&
+             (rx_data!=8'h0d) &&
+             (rx_data!=8'h0a) &&
+             (rx_cnt < MAX_PAYLOAD)) begin
+        rx_buf[rx_cnt] <= rx_data;
+        rx_cnt         <= rx_cnt + 1'b1;
+    end
+end
+localparam ST_IDLE   = 0,
+           ST_SEND_P = 1,
+           ST_SEND_B = 2,
+           ST_SEND_E = 3,
+           ST_WAIT   = 4;
+reg  [2:0]  state;
+reg  [7:0]  tx_data;
+reg         tx_data_vld;
+wire        tx_data_rdy;
+reg  [5:0]  ptr;               
+reg  [31:0] one_sec_cnt;       
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        state       <= ST_IDLE;
+        tx_data_vld <= 1'b0;
+        ptr         <= 0;
+        one_sec_cnt <= 0;
+    end else begin
+        case (state)
+        ST_IDLE: begin
+            if (one_sec_cnt >= CLK_FRE*1_000_000) begin
+                one_sec_cnt <= 0;
+                ptr         <= 0;
+                state       <= ST_SEND_P;
+            end else
+                one_sec_cnt <= one_sec_cnt + 1;
+        end
+        ST_SEND_P: begin                        
+            tx_data      <= PREFIX[8*(PREFIX_LEN-1-ptr) +: 8];
+            tx_data_vld  <= 1'b1;
+            if (tx_data_vld && tx_data_rdy) begin
+                if (ptr == PREFIX_LEN-1) begin
+                    ptr   <= 0;                 
+                    state <= ST_SEND_B;
+                end else
+                    ptr <= ptr + 1'b1;
+            end
+        end
+        ST_SEND_B: begin                        
+            tx_data     <= (ptr < rx_cnt) ? rx_buf[ptr] : 8'h20;  
+            tx_data_vld <= 1'b1;
+            if (tx_data_vld && tx_data_rdy) begin
+                if (ptr == rx_cnt) begin
+                    ptr   <= 0;
+                    state <= ST_SEND_E;
+                end else
+                    ptr <= ptr + 1'b1;
+            end
+        end
+        ST_SEND_E: begin                        
+            tx_data     <= CRLF[8*(1-ptr) +: 8];
+            tx_data_vld <= 1'b1;
+            if (tx_data_vld && tx_data_rdy) begin
+                if (ptr == 1) begin
+                    tx_data_vld <= 1'b0;
+                    state       <= ST_WAIT;
+                end else
+                    ptr <= ptr + 1'b1;
+            end
+        end
+        ST_WAIT: begin                          
+            state <= ST_IDLE;
+        end
+        endcase
+    end
+end
+uart_rx #(
+    .CLK_FRE   (CLK_FRE),
+    .BAUD_RATE (UART_FRE)
+) u_rx (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .rx_data        (rx_data),
+    .rx_data_valid  (rx_data_vld),
+    .rx_data_ready  (rx_data_ready),
+    .rx_pin         (uart_rx)
+);
+uart_tx #(
+    .CLK_FRE   (CLK_FRE),
+    .BAUD_RATE (UART_FRE)
+) u_tx (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .tx_data        (tx_data),
+    .tx_data_valid  (tx_data_vld),
+    .tx_data_ready  (tx_data_rdy),
+    .tx_pin         (uart_tx)
+);
+endmodule
+
+`begin_keywords "1800-2023"
+`timescale 1ns/1ps
+module top_uart_sha256 #(
+    parameter CLK_FREQ = 27_000_000,    
+    parameter BAUD     = 115200
+)(
+    input        clk,
+    input        rst,        
+    input        uart_rx,    
+    output       uart_tx     
+);
+    localparam integer CLK_FREQ_MHZ = CLK_FREQ / 1_000_000;
+    wire [7:0] rx_data;
+    wire       rx_valid;
+    uart_rx #(
+        .CLK_FRE   (CLK_FREQ_MHZ),
+        .BAUD_RATE (BAUD)
+    ) uart_rx_inst (
+        .clk            (clk),
+        .rst_n          (~rst),       
+        .rx_data        (rx_data),
+        .rx_data_valid  (rx_valid),
+        .rx_data_ready  (1'b1),       
+        .rx_pin         (uart_rx)
+    );
+    reg        tx_data_valid = 1'b0;    
+    reg [7:0]  tx_data       = 8'd0;
+    wire       tx_ready;                
+    uart_tx #(
+        .CLK_FRE   (CLK_FREQ_MHZ),
+        .BAUD_RATE (BAUD)
+    ) uart_tx_inst (
+        .clk            (clk),
+        .rst_n          (~rst),
+        .tx_data        (tx_data),
+        .tx_data_valid  (tx_data_valid),
+        .tx_data_ready  (tx_ready),
+        .tx_pin         (uart_tx)
+    );
+    reg         start_hash = 1'b0;
+    reg         data_valid = 1'b0;
+    reg         data_last  = 1'b0;
+    reg  [7:0]  data_in    = 8'd0;
+    wire [255:0] hash_out;
+    wire         hash_done;
+    sha256_processor processor (
+        .clk        (clk),
+        .rst        (rst),
+        .start      (start_hash),
+        .data_in    (data_in),
+        .data_valid (data_valid),
+        .data_last  (data_last),
+        .hash_out   (hash_out),
+        .done       (hash_done)
+    );
+    reg [2:0] state;
+    localparam IDLE = 0, RECEIVE = 1, WAIT_DONE = 2, SEND = 3, DONE = 4;
+    reg [7:0] byte_counter;
+    reg [6:0] send_index;    
+    reg        have_hold;      
+    reg [7:0]  hold_byte; 
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            have_hold <= 1'b0;
+            hold_byte <= 8'd0;
+            state        <= IDLE;
+            data_valid   <= 0;
+            data_last    <= 0;
+            start_hash   <= 0;
+            tx_data_valid<= 0;
+            byte_counter <= 0;
+            send_index   <= 0;
+        end else begin
+            data_valid    <= 0;
+            data_last     <= 0;
+            start_hash    <= 0;
+            tx_data_valid <= 0;
+            case (state)
+                IDLE: begin
+                    if (rx_valid && rx_data == 8'h01) begin
+                        start_hash <= 1;
+                        byte_counter <= 0;
+                        state        <= RECEIVE;
+                    end
+                end
+                RECEIVE: begin
+                    if (rx_valid) begin
+                        if (rx_data == 8'hFF) begin           
+                            if (have_hold) begin
+                                data_in     <= hold_byte;
+                                data_valid  <= 1'b1;
+                                data_last   <= 1'b1;          
+                                byte_counter<= byte_counter + 1;
+                            end
+                            have_hold <= 1'b0;                
+                            state     <= WAIT_DONE;
+                        end else begin                        
+                            if (have_hold) begin
+                                data_in     <= hold_byte;
+                                data_valid  <= 1'b1;
+                                byte_counter<= byte_counter + 1;
+                            end
+                            hold_byte <= rx_data;
+                            have_hold <= 1'b1;
+                        end
+                    end
+                end
+                WAIT_DONE: begin
+                    if (hash_done) begin
+                        send_index <= 0;
+                        state      <= SEND;
+                    end
+                end
+                SEND: begin
+                    if (tx_ready) begin           
+                        tx_data       <= to_ascii(hash_out[255 - send_index*4 -: 4]);
+                        tx_data_valid <= 1;       
+                        send_index    <= send_index + 1;
+                        if (send_index == 7'd63)
+                            state <= DONE;
+                    end
+                end
+                DONE: begin
+                    if (tx_ready)
+                        state <= IDLE;
+                end
+            endcase
+        end
+    end
+    function [7:0] to_ascii (input [3:0] nib);
+        to_ascii = (nib < 10) ? ("0" + nib) : ("a" + nib - 10);
+    endfunction
+endmodule
+
+`begin_keywords "1800-2023"
+`timescale 1ns/1ps
+module top_wrapper_tang9k (
+    input clk,            
+    input rst_n,            
+    input uart_rx,        
+    output uart_tx,       
+    output led0           
+);
+    wire internal_rst = ~rst_n;
+    top_uart_sha256 top (
+        .clk(clk),
+        .rst(internal_rst),
+        .uart_rx(uart_rx),
+        .uart_tx(uart_tx)
+    );
+    assign led0 = uart_tx;  
+endmodule
+
+`begin_keywords "1800-2023"
+module uart_rx
+#(
+	parameter CLK_FRE = 50,       
+	parameter BAUD_RATE = 115200  
+)
+(
+	input                        clk,               
+	input                        rst_n,             
+	output reg[7:0]              rx_data,           
+	output reg                   rx_data_valid,     
+	input                        rx_data_ready,     
+	input                        rx_pin             
+);
+localparam                       CYCLE = CLK_FRE * 1000000 / BAUD_RATE;
+localparam                       S_IDLE      = 1;
+localparam                       S_START     = 2;  
+localparam                       S_REC_BYTE  = 3;  
+localparam                       S_STOP      = 4;  
+localparam                       S_DATA      = 5;
+reg[2:0]                         state;
+reg[2:0]                         next_state;
+reg                              rx_d0;             
+reg                              rx_d1;             
+wire                             rx_negedge;        
+reg[7:0]                         rx_bits;           
+reg[15:0]                        cycle_cnt;         
+reg[2:0]                         bit_cnt;           
+assign rx_negedge = rx_d1 && ~rx_d0;
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+	begin
+		rx_d0 <= 1'b0;
+		rx_d1 <= 1'b0;	
+	end
+	else
+	begin
+		rx_d0 <= rx_pin;
+		rx_d1 <= rx_d0;
+	end
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		state <= S_IDLE;
+	else
+		state <= next_state;
+end
+always@(*)
+begin
+	case(state)
+		S_IDLE:
+			if(rx_negedge)
+				next_state <= S_START;
+			else
+				next_state <= S_IDLE;
+		S_START:
+			if(cycle_cnt == CYCLE - 1) 
+				next_state <= S_REC_BYTE;
+			else
+				next_state <= S_START;
+		S_REC_BYTE:
+			if(cycle_cnt == CYCLE - 1  && bit_cnt == 3'd7)   
+				next_state <= S_STOP;
+			else
+				next_state <= S_REC_BYTE;
+		S_STOP:
+			if(cycle_cnt == CYCLE/2 - 1) 
+				next_state <= S_DATA;
+			else
+				next_state <= S_STOP;
+		S_DATA:
+			if(rx_data_ready)     
+				next_state <= S_IDLE;
+			else
+				next_state <= S_DATA;
+		default:
+			next_state <= S_IDLE;
+	endcase
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		rx_data_valid <= 1'b0;
+	else if(state == S_STOP && next_state != state)
+		rx_data_valid <= 1'b1;
+	else if(state == S_DATA && rx_data_ready)
+		rx_data_valid <= 1'b0;
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		rx_data <= 8'd0;
+	else if(state == S_STOP && next_state != state)
+		rx_data <= rx_bits; 
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			bit_cnt <= 3'd0;
+		end
+	else if(state == S_REC_BYTE)
+		if(cycle_cnt == CYCLE - 1)
+			bit_cnt <= bit_cnt + 3'd1;
+		else
+			bit_cnt <= bit_cnt;
+	else
+		bit_cnt <= 3'd0;
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		cycle_cnt <= 16'd0;
+	else if((state == S_REC_BYTE && cycle_cnt == CYCLE - 1) || next_state != state)
+		cycle_cnt <= 16'd0;
+	else
+		cycle_cnt <= cycle_cnt + 16'd1;	
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		rx_bits <= 8'd0;
+	else if(state == S_REC_BYTE && cycle_cnt == CYCLE/2 - 1)
+		rx_bits[bit_cnt] <= rx_pin;
+	else
+		rx_bits <= rx_bits; 
+end
+endmodule 
+
+`begin_keywords "1800-2023"
+module uart_tx
+#(
+	parameter CLK_FRE = 50,       
+	parameter BAUD_RATE = 115200  
+)
+(
+	input                        clk,               
+	input                        rst_n,             
+	input[7:0]                   tx_data,           
+	input                        tx_data_valid,     
+	output reg                   tx_data_ready,     
+	output                       tx_pin             
+);
+localparam                       CYCLE = CLK_FRE * 1000000 / BAUD_RATE;
+localparam                       S_IDLE       = 1;
+localparam                       S_START      = 2; 
+localparam                       S_SEND_BYTE  = 3; 
+localparam                       S_STOP       = 4; 
+reg[2:0]                         state;
+reg[2:0]                         next_state;
+reg[15:0]                        cycle_cnt;  
+reg[2:0]                         bit_cnt; 
+reg[7:0]                         tx_data_latch;  
+reg                              tx_reg;  
+assign tx_pin = tx_reg;
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		state <= S_IDLE;
+	else
+		state <= next_state;
+end
+always@(*)
+begin
+	case(state)
+		S_IDLE:
+			if(tx_data_valid == 1'b1)
+				next_state <= S_START;
+			else
+				next_state <= S_IDLE;
+		S_START:
+			if(cycle_cnt == CYCLE - 1)
+				next_state <= S_SEND_BYTE;
+			else
+				next_state <= S_START;
+		S_SEND_BYTE:
+			if(cycle_cnt == CYCLE - 1  && bit_cnt == 3'd7)
+				next_state <= S_STOP;
+			else
+				next_state <= S_SEND_BYTE;
+		S_STOP:
+			if(cycle_cnt == CYCLE - 1)
+				next_state <= S_IDLE;
+			else
+				next_state <= S_STOP;
+		default:
+			next_state <= S_IDLE;
+	endcase
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			tx_data_ready <= 1'b0;
+		end
+	else if(state == S_IDLE)
+		if(tx_data_valid == 1'b1)
+			tx_data_ready <= 1'b0;
+		else
+			tx_data_ready <= 1'b1;
+	else if(state == S_STOP && cycle_cnt == CYCLE - 1)
+			tx_data_ready <= 1'b1;
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			tx_data_latch <= 8'd0;
+		end
+	else if(state == S_IDLE && tx_data_valid == 1'b1)
+			tx_data_latch <= tx_data;
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			bit_cnt <= 3'd0;
+		end
+	else if(state == S_SEND_BYTE)
+		if(cycle_cnt == CYCLE - 1)
+			bit_cnt <= bit_cnt + 3'd1;
+		else
+			bit_cnt <= bit_cnt;
+	else
+		bit_cnt <= 3'd0;
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		cycle_cnt <= 16'd0;
+	else if((state == S_SEND_BYTE && cycle_cnt == CYCLE - 1) || next_state != state)
+		cycle_cnt <= 16'd0;
+	else
+		cycle_cnt <= cycle_cnt + 16'd1;	
+end
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		tx_reg <= 1'b1;
+	else
+		case(state)
+			S_IDLE,S_STOP:
+				tx_reg <= 1'b1; 
+			S_START:
+				tx_reg <= 1'b0; 
+			S_SEND_BYTE:
+				tx_reg <= tx_data_latch[bit_cnt];
+			default:
+				tx_reg <= 1'b1; 
+		endcase
+end
+endmodule 

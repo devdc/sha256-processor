@@ -1,0 +1,449 @@
+`begin_keywords "1800-2023"
+`line 1 "src/test_uart_beacon.v" 1
+`timescale 1ns/1ps
+module test_uart_beacon #(
+    parameter CLK_FRE      = 27,         
+    parameter UART_FRE     = 115200,     
+    parameter MAX_PAYLOAD  = 32          
+)(
+    input  wire clk,
+    input  wire rst_n,
+    input  wire uart_rx,
+    output wire uart_tx
+);
+
+`line 13 "src/test_uart_beacon.v" 0
+ 
+ 
+ 
+parameter          PREFIX_LEN = 20;            
+localparam [8*PREFIX_LEN-1:0] PREFIX =
+        "Hello Tang Nano 9K: ";
+localparam [15:0]  CRLF = 16'h0d0a;            
+
+`line 21 "src/test_uart_beacon.v" 0
+ 
+ 
+ 
+reg  [7:0]  rx_buf [0:MAX_PAYLOAD-1];
+reg  [5:0]  rx_cnt;            
+wire [7:0]  rx_data;
+wire        rx_data_vld;
+wire        rx_data_ready = 1'b1;
+
+`line 30 "src/test_uart_beacon.v" 0
+ 
+ 
+ 
+reg tx_done;
+always @(posedge clk or negedge rst_n)
+    if (!rst_n)
+        tx_done <= 1'b0;
+    else
+        tx_done <= (state==ST_SEND_E) && (tx_data_vld && tx_data_rdy && ptr==1);
+
+`line 40 "src/test_uart_beacon.v" 0
+ 
+ 
+ 
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+        rx_cnt <= 0;
+    else if (tx_done)                        
+        rx_cnt <= 0;
+    else if (rx_data_vld &&
+             (rx_data!=8'h0d) &&
+             (rx_data!=8'h0a) &&
+             (rx_cnt < MAX_PAYLOAD)) begin
+        rx_buf[rx_cnt] <= rx_data;
+        rx_cnt         <= rx_cnt + 1'b1;
+    end
+end
+
+`line 57 "src/test_uart_beacon.v" 0
+ 
+ 
+ 
+localparam ST_IDLE   = 0,
+           ST_SEND_P = 1,
+           ST_SEND_B = 2,
+           ST_SEND_E = 3,
+           ST_WAIT   = 4;
+
+`line 66 "src/test_uart_beacon.v" 0
+reg  [2:0]  state;
+reg  [7:0]  tx_data;
+reg         tx_data_vld;
+wire        tx_data_rdy;
+reg  [5:0]  ptr;               
+reg  [31:0] one_sec_cnt;       
+
+`line 73 "src/test_uart_beacon.v" 0
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        state       <= ST_IDLE;
+        tx_data_vld <= 1'b0;
+        ptr         <= 0;
+        one_sec_cnt <= 0;
+    end else begin
+        case (state)
+         
+        ST_IDLE: begin
+            if (one_sec_cnt >= CLK_FRE*1_000_000) begin
+                one_sec_cnt <= 0;
+                ptr         <= 0;
+                state       <= ST_SEND_P;
+            end else
+                one_sec_cnt <= one_sec_cnt + 1;
+        end
+         
+        ST_SEND_P: begin                        
+            tx_data      <= PREFIX[8*(PREFIX_LEN-1-ptr) +: 8];
+            tx_data_vld  <= 1'b1;
+            if (tx_data_vld && tx_data_rdy) begin
+                if (ptr == PREFIX_LEN-1) begin
+                    ptr   <= 0;                 
+                    state <= ST_SEND_B;
+                end else
+                    ptr <= ptr + 1'b1;
+            end
+        end
+         
+        ST_SEND_B: begin                        
+            tx_data     <= (ptr < rx_cnt) ? rx_buf[ptr] : 8'h20;  
+            tx_data_vld <= 1'b1;
+            if (tx_data_vld && tx_data_rdy) begin
+                if (ptr == rx_cnt) begin
+                    ptr   <= 0;
+                    state <= ST_SEND_E;
+                end else
+                    ptr <= ptr + 1'b1;
+            end
+        end
+         
+        ST_SEND_E: begin                        
+            tx_data     <= CRLF[8*(1-ptr) +: 8];
+            tx_data_vld <= 1'b1;
+            if (tx_data_vld && tx_data_rdy) begin
+                if (ptr == 1) begin
+                    tx_data_vld <= 1'b0;
+ 
+                    state       <= ST_WAIT;
+                end else
+                    ptr <= ptr + 1'b1;
+            end
+        end
+         
+        ST_WAIT: begin                          
+            state <= ST_IDLE;
+        end
+        endcase
+    end
+end
+
+`line 135 "src/test_uart_beacon.v" 0
+ 
+ 
+ 
+uart_rx #(
+    .CLK_FRE   (CLK_FRE),
+    .BAUD_RATE (UART_FRE)
+) u_rx (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .rx_data        (rx_data),
+    .rx_data_valid  (rx_data_vld),
+    .rx_data_ready  (rx_data_ready),
+    .rx_pin         (uart_rx)
+);
+
+`line 150 "src/test_uart_beacon.v" 0
+uart_tx #(
+    .CLK_FRE   (CLK_FRE),
+    .BAUD_RATE (UART_FRE)
+) u_tx (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .tx_data        (tx_data),
+    .tx_data_valid  (tx_data_vld),
+    .tx_data_ready  (tx_data_rdy),
+    .tx_pin         (uart_tx)
+);
+endmodule
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+
+`line 299 "src/test_uart_beacon.v" 0
+ 
+
+`line 301 "src/test_uart_beacon.v" 0

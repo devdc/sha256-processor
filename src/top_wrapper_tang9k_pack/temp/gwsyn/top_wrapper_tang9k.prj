@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-synthesis-project>
+<Project>
+    <Version>beta</Version>
+    <Device id="GW1NR-9C" package="QFN88P" speed="6" partNumber="GW1NR-LV9QN88PC6/I5"/>
+    <FileList>
+        <File path="C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_wrapper_tang9k.v" type="verilog"/>
+        <File path="C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_uart_sha256.v" type="verilog"/>
+        <File path="C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_rx_core.v" type="verilog"/>
+        <File path="C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_tx_core.v" type="verilog"/>
+        <File path="C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_processor.v" type="verilog"/>
+        <File path="C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_core.v" type="verilog"/>
+    </FileList>
+    <OptionList>
+        <Option type="disable_insert_pad" value="1"/>
+        <Option type="looplimit" value="2000"/>
+        <Option type="output_file" value="top_wrapper_tang9k.vg"/>
+        <Option type="output_wrapper_file" value="top_wrapper_tang9k_wrapper.v"/>
+        <Option type="ram_rw_check" value="0"/>
+        <Option type="top_module" value="top_wrapper_tang9k"/>
+        <Option type="verilog_language" value="verilog-2001"/>
+        <Option type="vhdl_language" value="vhdl-1993"/>
+    </OptionList>
+</Project>

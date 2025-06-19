@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="top_wrapper_tang9k" T_Register="2497(0)" T_Alu="720(0)" T_Lut="2740(0)" T_Ssram="160(0)">
+    <SubModule name="top" Register="28" Lut="287" T_Register="2497(28)" T_Alu="720(0)" T_Lut="2740(287)" T_Ssram="160(0)">
+        <SubModule name="uart_rx_inst" Register="41" Alu="3" Lut="57" T_Register="41(41)" T_Alu="3(3)" T_Lut="57(57)"/>
+        <SubModule name="uart_tx_inst" Register="31" Alu="3" Lut="51" T_Register="31(31)" T_Alu="3(3)" T_Lut="51(51)"/>
+        <SubModule name="processor" Register="1619" Lut="671" T_Register="2397(1619)" T_Alu="714(0)" T_Lut="2345(671)" T_Ssram="160(0)">
+            <SubModule name="sha_core" Register="778" Alu="714" Lut="1674" Ssram="160" T_Register="778(778)" T_Alu="714(714)" T_Lut="1674(1674)" T_Ssram="160(160)"/>
+        </SubModule>
+    </SubModule>
+</Module>

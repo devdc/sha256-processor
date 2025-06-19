@@ -1,0 +1,45 @@
+{
+ "Device" : "GW1NR-9C",
+ "Files" : [
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_core.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/sha256_processor.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/test_uart_beacon.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_uart_sha256.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/top_wrapper_tang9k.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_rx.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/uart_tx.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/src/tb_top_wrapper_tang9k.v",
+   "Type" : "verilog"
+  }
+ ],
+ "IncludePath" : [
+  "C:/Users/dvirdc/Documents/fpga/sha256_processor/src"
+ ],
+ "LoopLimit" : 2000,
+ "ResultFile" : "C:/Users/dvirdc/Documents/fpga/sha256_processor/impl/temp/rtl_parser.result",
+ "Top" : "top_wrapper_tang9k",
+ "VerilogStd" : "verilog_2001",
+ "VhdlStd" : "vhdl_93"
+}
