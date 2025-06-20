@@ -36,6 +36,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vtb_top_wrapper_tang9k___024root final : publ
         CData/*6:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__send_index;
         CData/*0:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__have_hold;
         CData/*7:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__hold_byte;
+        CData/*0:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__tx_ready_d;
         CData/*2:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_rx_inst__DOT__state;
         CData/*2:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_rx_inst__DOT__next_state;
         CData/*0:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_rx_inst__DOT__rx_d0;
@@ -68,6 +69,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vtb_top_wrapper_tang9k___024root final : publ
         SData/*15:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_tx_inst__DOT__cycle_cnt;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__j;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__fd;
+        VlWide<8>/*255:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__shift_reg;
         VlWide<16>/*511:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__block_buffer;
         VlWide<8>/*255:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__core_hash_out;
         VlWide<16>/*511:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__core_block;
@@ -79,10 +81,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vtb_top_wrapper_tang9k___024root final : publ
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__c;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__d;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__e;
-        IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__f;
-        IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__g;
     };
     struct {
+        IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__f;
+        IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__g;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__h;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__h0;
         IData/*31:0*/ tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__processor__DOT__sha_core__DOT__h1;

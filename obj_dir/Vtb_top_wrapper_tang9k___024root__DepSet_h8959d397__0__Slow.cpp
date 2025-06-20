@@ -407,6 +407,8 @@ VL_ATTR_COLD void Vtb_top_wrapper_tang9k___024root___ctor_var_reset(Vtb_top_wrap
     vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__send_index = VL_RAND_RESET_I(7);
     vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__have_hold = VL_RAND_RESET_I(1);
     vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__hold_byte = VL_RAND_RESET_I(8);
+    VL_RAND_RESET_W(256, vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__shift_reg);
+    vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__tx_ready_d = VL_RAND_RESET_I(1);
     vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_rx_inst__DOT__state = VL_RAND_RESET_I(3);
     vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_rx_inst__DOT__next_state = VL_RAND_RESET_I(3);
     vlSelf->tb_top_wrapper_tang9k__DOT__dut__DOT__top__DOT__uart_rx_inst__DOT__rx_d0 = VL_RAND_RESET_I(1);

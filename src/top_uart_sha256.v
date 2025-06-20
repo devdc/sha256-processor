@@ -88,9 +88,13 @@ module top_uart_sha256 #(
     reg        have_hold;     // 1 = hold_byte contains a payload byte
     reg [7:0]  hold_byte; 
 
+    reg [255:0] shift_reg;
+
+    reg        tx_ready_d;      // 1-cycle delayed copy of tx_ready
+
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            
+            tx_ready_d <= 1'b0;
             have_hold <= 1'b0;
             hold_byte <= 8'd0;
 
@@ -103,6 +107,7 @@ module top_uart_sha256 #(
             send_index   <= 0;
         end else begin
             // defaults every cycle
+            tx_ready_d <= tx_ready;     // remember previous value each cycle
             data_valid    <= 0;
             data_last     <= 0;
             start_hash    <= 0;
@@ -146,18 +151,24 @@ module top_uart_sha256 #(
 
                 WAIT_DONE: begin
                     if (hash_done) begin
+                        shift_reg  <= hash_out;
                         send_index <= 0;
+                        tx_ready_d <= 1'b0;
                         state      <= SEND;
                     end
                 end
 
-                SEND: begin
-                    if (tx_ready) begin          // idle → safe to queue next byte
-                        tx_data       <= to_ascii(hash_out[255 - send_index*4 -: 4]);
-                        tx_data_valid <= 1;      // 1-cycle pulse
-                        send_index    <= send_index + 1;
+                SEND : begin
+                    if (tx_ready && !tx_ready_d) begin   // fire = rising edge of tx_ready
+                        tx_data       <= to_ascii(shift_reg[255:252]);
+                        tx_data_valid <= 1'b1;
+
                         if (send_index == 7'd63)
-                            state <= DONE;
+                            state <= DONE;               // all 64 nibbles are in flight
+                        else begin
+                            shift_reg  <= {shift_reg[251:0], 4'b0};
+                            send_index <= send_index + 1;
+                        end
                     end
                 end
 

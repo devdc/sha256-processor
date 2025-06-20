@@ -112,7 +112,7 @@ module tb_top_wrapper_tang9k;
         uart_send_byte(8'hFF); // end of message
 
         // Give the DUT some time to respond (shortened to limit VCD size)
-        #(BIT_PERIOD * 300);
+        #(BIT_PERIOD * 100);
 
         $display("Simulation complete.");
         $finish;

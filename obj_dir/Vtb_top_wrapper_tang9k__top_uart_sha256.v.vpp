@@ -113,13 +113,19 @@ module top_uart_sha256 #(
     reg [7:0]  hold_byte; 
 
 `line 91 "src/top_uart_sha256.v" 0
+    reg [255:0] shift_reg;
+
+`line 93 "src/top_uart_sha256.v" 0
+    reg        tx_ready_d;       
+
+`line 95 "src/top_uart_sha256.v" 0
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            
+            tx_ready_d <= 1'b0;
             have_hold <= 1'b0;
             hold_byte <= 8'd0;
 
-`line 97 "src/top_uart_sha256.v" 0
+`line 101 "src/top_uart_sha256.v" 0
             state        <= IDLE;
             data_valid   <= 0;
             data_last    <= 0;
@@ -129,12 +135,13 @@ module top_uart_sha256 #(
             send_index   <= 0;
         end else begin
              
+            tx_ready_d <= tx_ready;      
             data_valid    <= 0;
             data_last     <= 0;
             start_hash    <= 0;
             tx_data_valid <= 0;
 
-`line 111 "src/top_uart_sha256.v" 0
+`line 116 "src/top_uart_sha256.v" 0
             case (state)
                 IDLE: begin
                     if (rx_valid && rx_data == 8'h01) begin
@@ -144,7 +151,7 @@ module top_uart_sha256 #(
                     end
                 end
 
-`line 120 "src/top_uart_sha256.v" 0
+`line 125 "src/top_uart_sha256.v" 0
                 RECEIVE: begin
                     if (rx_valid) begin
                         if (rx_data == 8'hFF) begin           
@@ -158,7 +165,7 @@ module top_uart_sha256 #(
                             have_hold <= 1'b0;                
                             state     <= WAIT_DONE;
 
-`line 133 "src/top_uart_sha256.v" 0
+`line 138 "src/top_uart_sha256.v" 0
                         end else begin                        
                              
                             if (have_hold) begin
@@ -173,26 +180,33 @@ module top_uart_sha256 #(
                     end
                 end
 
-`line 147 "src/top_uart_sha256.v" 0
+`line 152 "src/top_uart_sha256.v" 0
                 WAIT_DONE: begin
                     if (hash_done) begin
+                        shift_reg  <= hash_out;
                         send_index <= 0;
+                        tx_ready_d <= 1'b0;
                         state      <= SEND;
                     end
                 end
 
-`line 154 "src/top_uart_sha256.v" 0
-                SEND: begin
-                    if (tx_ready) begin           
-                        tx_data       <= to_ascii(hash_out[255 - send_index*4 -: 4]);
-                        tx_data_valid <= 1;       
-                        send_index    <= send_index + 1;
+`line 161 "src/top_uart_sha256.v" 0
+                SEND : begin
+                    if (tx_ready && !tx_ready_d) begin    
+                        tx_data       <= to_ascii(shift_reg[255:252]);
+                        tx_data_valid <= 1'b1;
+
+`line 166 "src/top_uart_sha256.v" 0
                         if (send_index == 7'd63)
-                            state <= DONE;
+                            state <= DONE;                
+                        else begin
+                            shift_reg  <= {shift_reg[251:0], 4'b0};
+                            send_index <= send_index + 1;
+                        end
                     end
                 end
 
-`line 164 "src/top_uart_sha256.v" 0
+`line 175 "src/top_uart_sha256.v" 0
                 DONE: begin
                     if (tx_ready)
                         state <= IDLE;
@@ -201,13 +215,13 @@ module top_uart_sha256 #(
         end
     end
 
-`line 172 "src/top_uart_sha256.v" 0
+`line 183 "src/top_uart_sha256.v" 0
      
     function [7:0] to_ascii (input [3:0] nib);
         to_ascii = (nib < 10) ? ("0" + nib) : ("a" + nib - 10);
     endfunction
 
-`line 177 "src/top_uart_sha256.v" 0
+`line 188 "src/top_uart_sha256.v" 0
 endmodule
 
-`line 179 "src/top_uart_sha256.v" 0
+`line 190 "src/top_uart_sha256.v" 0

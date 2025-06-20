@@ -4,6 +4,11 @@
 
 #include "verilated.h"
 
+extern const VlWide<8>/*255:0*/ Vtb_top_wrapper_tang9k__ConstPool__CONST_h4b979007_0 = {{
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0x0fffffff
+}};
+
 extern const VlWide<16>/*511:0*/ Vtb_top_wrapper_tang9k__ConstPool__CONST_h93e1b771_0 = {{
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000,

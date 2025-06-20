@@ -352,7 +352,7 @@ module tb_top_wrapper_tang9k;
         uart_send_byte(8'h53);  
         uart_send_byte(8'h54);  
         uart_send_byte(8'hFF);  
-        #(BIT_PERIOD * 300);
+        #(BIT_PERIOD * 100);
         $display("Simulation complete.");
         $finish;
     end
@@ -554,8 +554,11 @@ module top_uart_sha256 #(
     reg [6:0] send_index;    
     reg        have_hold;      
     reg [7:0]  hold_byte; 
+    reg [255:0] shift_reg;
+    reg        tx_ready_d;       
     always @(posedge clk or posedge rst) begin
         if (rst) begin
+            tx_ready_d <= 1'b0;
             have_hold <= 1'b0;
             hold_byte <= 8'd0;
             state        <= IDLE;
@@ -566,6 +569,7 @@ module top_uart_sha256 #(
             byte_counter <= 0;
             send_index   <= 0;
         end else begin
+            tx_ready_d <= tx_ready;      
             data_valid    <= 0;
             data_last     <= 0;
             start_hash    <= 0;
@@ -602,17 +606,22 @@ module top_uart_sha256 #(
                 end
                 WAIT_DONE: begin
                     if (hash_done) begin
+                        shift_reg  <= hash_out;
                         send_index <= 0;
+                        tx_ready_d <= 1'b0;
                         state      <= SEND;
                     end
                 end
-                SEND: begin
-                    if (tx_ready) begin           
-                        tx_data       <= to_ascii(hash_out[255 - send_index*4 -: 4]);
-                        tx_data_valid <= 1;       
-                        send_index    <= send_index + 1;
+                SEND : begin
+                    if (tx_ready && !tx_ready_d) begin    
+                        tx_data       <= to_ascii(shift_reg[255:252]);
+                        tx_data_valid <= 1'b1;
                         if (send_index == 7'd63)
-                            state <= DONE;
+                            state <= DONE;                
+                        else begin
+                            shift_reg  <= {shift_reg[251:0], 4'b0};
+                            send_index <= send_index + 1;
+                        end
                     end
                 end
                 DONE: begin

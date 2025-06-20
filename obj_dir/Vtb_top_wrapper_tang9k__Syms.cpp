@@ -18,7 +18,7 @@ Vtb_top_wrapper_tang9k__Syms::Vtb_top_wrapper_tang9k__Syms(VerilatedContext* con
     , TOP{this, namep}
 {
         // Check resources
-        Verilated::stackCheck(600);
+        Verilated::stackCheck(666);
     // Configure time unit / time precision
     _vm_contextp__->timeunit(-9);
     _vm_contextp__->timeprecision(-12);
